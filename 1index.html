@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제주도 지역별 인구 분포도</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Malgun Gothic', dotum, sans-serif;
+            background-color: #f8f9fa;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+        /* 범례 스타일 */
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 12px;
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+            border-radius: 3px;
+        }
+        /* 말풍선 팝업 스타일 커스텀 */
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            color: #2d3748;
+            font-size: 13px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        .custom-popup .leaflet-popup-tip {
+            background: rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. 지도 초기화 (제주도 중심 설정)
+        const map = L.map('map', {
+            center: [33.38, 126.55],
+            zoom: 10,
+            zoomControl: false 
+        });
+
+        // 2. 배경 지도 레이어 추가 (차분한 그레이/화이트 톤)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        }).addTo(map);
+
+        // 3. 지역별 데이터 (위도, 경도 좌표 포함)
+        const jejuData = [
+            {
+                name: "제주시 중심권",
+                population: 245000,
+                density: "고밀도 주거지역",
+                features: "제주도 인구의 최대 밀집 지역, 상권 및 학군 집중",
+                coords: [
+                    [33.50, 126.46], [33.52, 126.49], [33.52, 126.56], 
+                    [33.47, 126.57], [33.45, 126.50], [33.47, 126.45]
+                ]
+            },
+            {
+                name: "애월읍",
+                population: 38000,
+                density: "지속 성장 지역",
+                features: "이주민 유입이 활발했던 지역, 카페 및 관광 발달",
+                coords: [
+                    [33.47, 126.31], [33.50, 126.46], [33.45, 126.50], 
+                    [33.39, 126.41], [33.37, 126.33]
+                ]
+            },
+            {
+                name: "한림읍·한경면",
+                population: 31000,
+                density: "서부 농어촌 중심",
+                features: "농어업 기반 중심지, 협재 해변 및 예술인마을 인접",
+                coords: [
+                    [33.40, 126.16], [33.45, 126.24], [33.47, 126.31], 
+                    [33.37, 126.33], [33.32, 126.26], [33.34, 126.15]
+                ]
+            },
+            {
+                name: "대정읍·안덕면",
+                population: 34000,
+                density: "영어교육도시 중심",
+                features: "영어교육도시 조성으로 젊은 층 및 외지인 유입률 높음",
+                coords: [
+                    [33.34, 126.15], [33.32, 126.26], [33.39, 126.41], 
+                    [33.31, 126.43], [33.23, 126.32], [33.21, 126.25]
+                ]
+            },
+            {
+                name: "서귀포시 중심권",
+                population: 105000,
+                density: "남부 행정·관광 중심",
+                features: "혁신도시 유입 및 중심 상권, 온화한 기후 조건",
+                coords: [
+                    [33.31, 126.43], [33.33, 126.60], [33.26, 126.63], 
+                    [33.23, 126.56], [33.23, 126.45]
+                ]
+            },
+            {
+                name: "남원읍·표선면",
+                population: 31000,
+                density: "감귤·귀농 중심",
+                features: "전형적인 귀농·귀촌 선호 지역, 감귤 과수원 밀집",
+                coords: [
+                    [33.33, 126.60], [33.39, 126.80], [33.32, 126.85], 
+                    [33.26, 126.70], [33.26, 126.63]
+                ]
+            },
+            {
+                name: "성산읍·구좌읍",
+                population: 31500,
+                density: "동부 관광·농업 중심",
+                features: "성산일출봉 중심의 관광 및 당근, 무 등 농업 발달",
+                coords: [
+                    [33.39, 126.80], [33.52, 126.90], [33.56, 126.70], 
+                    [33.45, 126.65], [33.41, 126.66]
+                ]
+            },
+            {
+                name: "조천읍",
+                population: 26500,
+                density: "제주시 위성 주거지",
+                features: "제주시 중심가와 인접하여 통근 인구 및 주택 수요 증가",
+                coords: [
+                    [33.52, 126.56], [33.56, 126.70], [33.45, 126.65], 
+                    [33.43, 126.60], [33.47, 126.57]
+                ]
+            }
+        ];
+
+        // 4. 인구수에 따른 색상 지정 함수 (차분한 블루 톤)
+        function getColor(p) {
+            return p > 200000 ? '#084594' :
+                   p > 100000 ? '#2171b5' :
+                   p > 35000  ? '#4292c6' :
+                   p > 30000  ? '#6baed6' :
+                                '#9ecae1';
+        }
+
+        // 5. 각 영역 스타일 정의
+        function style(feature) {
+            return {
+                fillColor: getColor(feature.population),
+                weight: 1.5,
+                opacity: 1,
+                color: 'white',
+                fillOpacity: 0.6
+            };
+        }
+
+        // 6. 각 다각형(Polygon) 레이어 배치 및 이벤트 설정
+        jejuData.forEach(region => {
+            const polygon = L.polygon(region.coords, style(region)).addTo(map);
+
+            // 지도 위에 지역 이름 텍스트 항상 띄우기 (Tooltip)
+            polygon.bindTooltip(region.name, {
+                permanent: true,
+                direction: 'center',
+                style: {
+                    background: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    color: '#2d3748',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    textShadow: '0 0 5px #fff'
+                }
+            });
+
+            // 클릭하거나 호버했을 때 나타날 상세 통계 팝업창 바인딩
+            const popupContent = `
+                <div style="padding: 5px;">
+                    <strong style="font-size: 14px; color: #2b6cb0;">📍 ${region.name}</strong><br>
+                    <hr style="margin: 5px 0; border: 0; border-top: 1px solid #eee;">
+                    👥 <b>인구수:</b> ${region.population.toLocaleString()}명<br>
+                    📊 <b>지역 특성:</b> ${region.density}<br>
+                    📝 <b>상세:</b> ${region.features}
+                </div>
+            `;
+            polygon.bindPopup(popupContent, { className: 'custom-popup', closeButton: false });
+
+            // 마우스 소통 이벤트
+            polygon.on({
+                mouseover: function (e) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        fillOpacity: 0.8,
+                        weight: 2.5,
+                        color: '#3182ce'
+                    });
+                    // 마우스를 올리면 팝업 열기
+                    this.openPopup(e.latlng);
+                },
+                mouseout: function (e) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        fillOpacity: 0.6,
+                        weight: 1.5,
+                        color: 'white'
+                    });
+                    // 마우스가 벗어나면 팝업 닫기
+                    this.closePopup();
+                },
+                click: function (e) {
+                    map.fitBounds(e.target.getBounds());
+                }
+            });
+        });
+
+        // 7. 우측 하단 범례(Legend) 추가
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'legend');
+            const grades = [0, 30000, 35000, 100000, 200000];
+            
+            div.innerHTML = '<strong>인구 구분</strong><br>';
+            for (let i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                    grades[i].toLocaleString() + (grades[i + 1] ? '명 ~ ' + grades[i + 1].toLocaleString() + '명<br>' : '명 이상');
+            }
+            return div;
+        };
+        legend.addTo(map);
+
+    </script>
+</body>
+</html>
